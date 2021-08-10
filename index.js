@@ -136,13 +136,17 @@ function _convertJsonSchemaToParamObj(jsonSchema, fieldName) {
   return paramObj
 }
 
+function _convertValidatorToJsonSchema(validator) {
+  return validator && _.isFunction(validator.validate) ? joi2json(validator) : validator
+}
+
 function addRouteParameters(route, validators, position) {
   const validator = validators ? validators[position] : null
   if (!validator) {
     return
   }
 
-  const joiJsonSchema = joi2json(validators[position])
+  const joiJsonSchema = _convertValidatorToJsonSchema(validators[position])
 
   _.forEach(joiJsonSchema.properties, (schema, field) => {
     const paramObj = _convertJsonSchemaToParamObj(joiJsonSchema, field)
@@ -186,7 +190,7 @@ function _convertJsonSchemaToSwagger(jsonSchema) {
 
 function addRequestBodyParams(swaggerReq, validators) {
   if (validators && validators.body) {
-    const bodySchema = joi2json(validators.body)
+    const bodySchema = _convertValidatorToJsonSchema(validators.body)
     const schema = _convertJsonSchemaToSwagger(bodySchema)
 
     let contentType = 'application/json'
@@ -211,7 +215,7 @@ function addRequestBodyParams(swaggerReq, validators) {
 function addRequestPathParams(route, pathParams, validators) {
   let pathParamSchema
   if (validators && validators.path) {
-    pathParamSchema = joi2json(validators.path)
+    pathParamSchema = _convertValidatorToJsonSchema(validators.path)
   }
 
   _.forEach(pathParams, (param) => {
@@ -241,7 +245,7 @@ function addResponseExample(routeDef, route) {
       return
     }
 
-    const resSchema = joi2json(example.schema)
+    const resSchema = _convertValidatorToJsonSchema(example.schema)
     const schema = _convertJsonSchemaToSwagger(resSchema)
     const mediaType = example.mediaType || 'application/json'
 
